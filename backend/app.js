@@ -1,19 +1,18 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
+const helmet = require("helmet");
 
 const sauceRoutes = require("./routes/sauce");
 const userRoutes = require("./routes/user");
 const path = require("path");
+require("dotenv").config();
 
 mongoose
-  .connect(
-    "mongodb+srv://MorganeChrrt:2Ignorance@cluster0.l4ske.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.SECRET_DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
@@ -29,9 +28,10 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
+  res.setHeader("Content-type", "multipart/form-data");
   next();
 });
-
+app.use(helmet());
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use(sauceRoutes);
 app.use("/api/auth", userRoutes);

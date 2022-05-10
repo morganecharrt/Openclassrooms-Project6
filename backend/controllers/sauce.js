@@ -1,5 +1,13 @@
 const Sauce = require("../models/sauce");
 const fs = require("fs");
+const Joi = require("joi");
+
+const schema = Joi.object({
+  name: Joi.string().alphanum().min(2).max(30),
+  manufacturer: Joi.string().alphanum().min(2).max(30),
+  description: Joi.string().alphanum().min(2).max(30),
+  mainPepper: Joi.string().alphanum().min(2).max(30),
+});
 
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
@@ -7,17 +15,28 @@ exports.createSauce = (req, res, next) => {
   sauceObject.dislikes = 0;
   sauceObject.usersLiked = [];
   sauceObject.usersDisliked = [];
-  delete sauceObject._id;
-  const sauce = new Sauce({
-    ...sauceObject,
-    imageUrl: `${req.protocol}://${req.get("host")}/images/${
-      req.file.filename
-    }`,
+
+  const { error } = schema.validate({
+    name: sauceObject.name,
+    manufacturer: sauceObject.manufacturer,
+    description: sauceObject.description,
+    mainPepper: sauceObject.mainPepper,
   });
-  sauce
-    .save()
-    .then(() => res.status(201).json({ message: "Objet enregistré !" }))
-    .catch((error) => res.status(400).json({ error }));
+
+  if (error == undefined) {
+    const sauce = new Sauce({
+      ...sauceObject,
+      imageUrl: `${req.protocol}://${req.get("host")}/images/${
+        req.file.filename
+      }`,
+    });
+    sauce
+      .save()
+      .then(() => res.status(201).json({ message: "Objet enregistré !" }))
+      .catch((error) => res.status(400).json({ error }));
+  } else {
+    return res.status(400).json({ message: error.details[0].message });
+  }
 };
 
 exports.getOneSauce = (req, res, next) => {
